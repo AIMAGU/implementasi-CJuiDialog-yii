@@ -1,0 +1,117 @@
+<?php $form=$this->beginWidget('bootstrap.widgets.TbActiveForm',array(
+  'id'=>'nilai-form',
+  //Type inputan berbentuk horizontal karena memanggil kelas horizontal yang sudah dideklarasikan di css bootstrap
+	'type'=>'horizontal',
+	'enableAjaxValidation'=>false,
+	//Untuk setFokus kursor
+	'focus'=>array($model,'nis'),
+)); ?>
+
+	<?php echo $form->errorSummary($model); ?>
+	
+	<!-- Membuat link untuk popup (Dialog) untuk field NIS dengan memberi id=mydialog -->
+	<?php echo $form->textFieldRow($model,'nis',array('class'=>'span5', 
+	'hint' => 'Silahkan tekan tombol <a href="#" onclick=$("#mydialog").dialog("open"); return false; class="btn submit">+</a> untuk melihat daftar siswa.')); ?>
+	
+	<?php echo $form->textFieldRow($model,'na',array('class'=>'span5')); ?>
+
+	<?php 
+		$kelas=Yii::app()->db->createCommand("select kelas from jadwal where kode_guru='".Yii::app()->user->id."';")->queryScalar();
+		if($kelas==6){
+			echo $form->textFieldRow($model,'un',array('class'=>'span5'));
+			echo $form->textFieldRow($model,'uas',array('class'=>'span5'));
+		}else {
+			echo $form->textFieldRow($model,'un',array('class'=>'span5', 'value'=>0, 'disabled'=>true));
+			echo $form->textFieldRow($model,'uas',array('class'=>'span5', 'value'=>0, 'disabled'=>true));
+		}
+	?>
+	<?php  ?>
+
+	<?php  ?>
+	
+	<?php $kode_mapel=Yii::app()->db->createCommand("select kode_mapel from jadwal where kode_guru='".Yii::app()->user->id."';")->queryScalar(); ?>
+	<?php echo $form->hiddenField($model,'kode_mapel',array('class'=>'span5','maxlength'=>6, 'value'=>$kode_mapel)); ?>
+
+	<?php $kelasArray = CHtml::listData(Jadwal::model()->findAll(array(
+		'order'=>'kelas ASC',
+		'condition'=>"kode_guru='".Yii::app()->user->id."'",
+		'distinct' => true
+		)), 'kelas', 'kelas');
+	?>
+	
+	<?php echo $form->hiddenField($model,'kelas',array('class'=>'span5','maxlength'=>1)); ?>
+
+	<?php echo $form->hiddenField($model,'lokal',array('class'=>'span5','maxlength'=>1)); ?>
+
+	<?php echo $form->hiddenField($model,'kode_guru',array('class'=>'span5','maxlength'=>2, 'value'=>Yii::app()->user->id)); ?>
+
+	<?php $kurikulum=Yii::app()->db->createCommand("select kurikulum from jadwal where kode_guru='".Yii::app()->user->id."';")->queryScalar(); ?>
+	<?php echo $form->hiddenField($model,'kurikulum',array('class'=>'span5','maxlength'=>1, 'value'=>$kurikulum)); ?>
+
+	<div class="form-actions">
+		<?php $this->widget('bootstrap.widgets.TbButton', array(
+			'buttonType'=>'submit',
+			'type'=>'warning',
+			'icon'=>'icon-plus icon-white',
+			'label'=>$model->isNewRecord ? 'Tambah' : 'Save',
+		)); ?>
+		
+		<?php $this->widget('bootstrap.widgets.TbButton', array('buttonType'=>'reset', 'label'=>'Ulangi', 'icon'=>'icon-refresh icon-white','type'=>'warning')); ?>
+		
+		<?php /*$this->widget('bootstrap.widgets.TbButton', array(
+		    'label'=>'Lihat Siswa',
+		    'url'=>'#',
+		    'icon'=>'icon-user icon-white',
+		    'type'=>'inverse', // null, 'primary', 'info', 'success', 'warning', 'danger' or 'inverse'
+		    'size'=>'small', // null, 'large', 'small' or 'mini'
+		        'htmlOptions'=>array('onclick'=>'$("#mydialog").dialog("open"); return false;'),
+			)); */
+		?>
+	</div>
+
+<?php $this->endWidget(); ?>
+
+<!-- Menampilkan dialog/popup ketika button di atas di klik -->
+<?php 
+    $this->beginWidget('zii.widgets.jui.CJuiDialog',array(
+	//Nama selector/id
+    'id'=>'mydialog',
+    // additional javascript options for the dialog plugin
+    'options'=>array(
+        'title'=>'Klik tanda <code>+</code> untuk input data siswa',
+        'autoOpen'=>false,
+		//Fokus atau modal diaktifkan
+		'modal' => true,
+		'width' => 640, 
+		'height' => 480
+    ),
+));?>
+<?php $this->widget('bootstrap.widgets.TbGridView',array(
+	'id'=>'penempatan-grid',
+	'dataProvider'=>Penempatan::model()->search2(),
+	'type'=>'striped bordered condensed',
+	//'filter'=>$model,
+	'columns'=>array(
+		'nis',
+		'nis0.nama_lengkap',
+		'kelas',
+		'lokal',
+		/* Set value ada di bagian onClick dibawah ini
+		 * $(\"#Nilai_nis \").val(\"". $data->nis."\") adalah pengesetan value di textfield nis. Value di ambil dari db $data->nis
+		 * #Nilai_nis = Nama Model_field
+		 */ 
+		array(
+				'header'=>'',
+				'type'=>'raw',
+				'value'=>'CHtml::Button(
+		        "+"
+		        , array(
+		        "name" => "get_link"
+		        , "id" => "get_link"
+		        , "onClick" => "$(\"#mydialog\").dialog(\"close\");$(\"#Nilai_nis \").val(\"". $data->nis."\");
+				$(\"#Nilai_kelas \").val(\"". $data->kelas."\");
+				$(\"#Nilai_lokal \").val(\"". $data->lokal."\");"))',
+		),
+	),
+)); ?>
+<?php	$this->endWidget('zii.widgets.jui.CJuiDialog'); ?>
